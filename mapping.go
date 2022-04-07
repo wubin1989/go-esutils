@@ -65,3 +65,30 @@ func (es *Es) CheckTypeExists(ctx context.Context) (b bool, err error) {
 	}
 	return
 }
+
+// GetMapping get mapping
+func (es *Es) GetMapping(ctx context.Context) (map[string]interface{}, error) {
+	var (
+		res map[string]interface{}
+		err error
+	)
+	if res, err = es.client.GetMapping().Index(es.esIndex).Type(es.esType).Do(ctx); err != nil {
+		return nil, errors.Wrap(err, "call GetMapping() error")
+	}
+	return res, nil
+}
+
+// PutMappingJson updates mapping with json data
+func (es *Es) PutMappingJson(ctx context.Context, mapping string) error {
+	var (
+		res *elastic.PutMappingResponse
+		err error
+	)
+	if res, err = es.client.PutMapping().Index(es.esIndex).Type(es.esType).BodyString(mapping).Do(ctx); err != nil {
+		return errors.Wrap(err, "call PutMappingJson() error")
+	}
+	if !res.Acknowledged {
+		return errors.New("putmapping failed!!!")
+	}
+	return nil
+}

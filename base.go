@@ -103,7 +103,7 @@ func (e *Es) newDefaultClient() {
 	e.client = client
 }
 
-func (e *Es) fetchAll(fsc *elastic.FetchSourceContext, boolQuery *elastic.BoolQuery, callback func(message json.RawMessage) (interface{}, error)) ([]interface{}, error) {
+func (e *Es) fetchAll(fsc *elastic.FetchSourceContext, boolQuery *elastic.BoolQuery, scrollSize int, callback func(message json.RawMessage) (interface{}, error)) ([]interface{}, error) {
 	var (
 		rets []interface{}
 		err  error
@@ -112,7 +112,7 @@ func (e *Es) fetchAll(fsc *elastic.FetchSourceContext, boolQuery *elastic.BoolQu
 	g, ctx := errgroup.WithContext(context.Background())
 	g.Go(func() error {
 		defer close(hits)
-		scroll := e.client.Scroll().Index(e.esIndex).Type(e.esType).Query(boolQuery).FetchSourceContext(fsc).Size(1000).KeepAlive("1m")
+		scroll := e.client.Scroll().Index(e.esIndex).Type(e.esType).Query(boolQuery).FetchSourceContext(fsc).Size(scrollSize).KeepAlive("1m")
 		for {
 			results, err := scroll.Do(ctx)
 			if err == io.EOF {
@@ -329,13 +329,23 @@ type Paging struct {
 	Limit      int         `json:"limit"`
 	Sortby     []Sort      `json:"sortby"`
 	// https://www.elastic.co/guide/en/elasticsearch/reference/6.8/search-request-source-filtering.html
-	Includes []string `json:"includes"`
-	Excludes []string `json:"excludes"`
+	Includes   []string `json:"includes"`
+	Excludes   []string `json:"excludes"`
+	ScrollSize int      `json:"scrollSize"`
+	Zone       string   `json:"zone"`
 }
 
 // String prints query in json format for debug purpose
 func (p Paging) String() string {
-	bq := query(p.StartDate, p.EndDate, p.DateField, p.QueryConds)
+	var zone *time.Location
+	if stringutils.IsNotEmpty(p.Zone) {
+		var err error
+		zone, err = time.LoadLocation(p.Zone)
+		if err != nil {
+			panic(err)
+		}
+	}
+	bq := query(p.StartDate, p.EndDate, p.DateField, p.QueryConds, zone)
 	src, _ := bq.Source()
 	return gabs.Wrap(src).StringIndent("", "  ")
 }
@@ -506,15 +516,18 @@ func querytree(boolQuery *elastic.BoolQuery, cond QueryCond) {
 	querynode(boolQuery, cond)
 }
 
-func query(startDate string, endDate string, dateField string, queryConds []QueryCond) *elastic.BoolQuery {
+func query(startDate string, endDate string, dateField string, queryConds []QueryCond, zone *time.Location) *elastic.BoolQuery {
+	if zone == nil {
+		zone = time.Local
+	}
 	boolQuery := elastic.NewBoolQuery()
 	if dateField != "" && startDate != "" && endDate != "" {
 		boolQuery.Must(
 			elastic.NewRangeQuery(dateField).
 				Gte(startDate).
-				Lte(endDate).
+				Lt(endDate).
 				Format("yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis").
-				TimeZone("Asia/Shanghai"),
+				TimeZone(zone.String()),
 		)
 	}
 	var hasShould bool

@@ -5,6 +5,8 @@ import (
 	"github.com/olivere/elastic"
 	"github.com/pkg/errors"
 	"github.com/unionj-cloud/go-doudou/toolkit/copier"
+	"github.com/unionj-cloud/go-doudou/toolkit/stringutils"
+	"time"
 )
 
 // Stat aggr only accept map[string]interface{} or elastic.Aggregation
@@ -17,7 +19,14 @@ func (es *Es) Stat(ctx context.Context, paging *Paging, aggr interface{}) (map[s
 	)
 
 	if paging != nil {
-		src = query(paging.StartDate, paging.EndDate, paging.DateField, paging.QueryConds)
+		var zone *time.Location
+		if stringutils.IsNotEmpty(paging.Zone) {
+			zone, err = time.LoadLocation(paging.Zone)
+			if err != nil {
+				return nil, errors.Wrap(err, "call LoadLocation() error")
+			}
+		}
+		src = query(paging.StartDate, paging.EndDate, paging.DateField, paging.QueryConds, zone)
 	}
 
 	searchService := es.client.Search().Index(es.esIndex).Type(es.esType)

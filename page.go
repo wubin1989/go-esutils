@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"github.com/olivere/elastic"
 	"github.com/pkg/errors"
+	"github.com/unionj-cloud/go-doudou/toolkit/stringutils"
+	"time"
 )
 
 // PageResult represents result of pagination
@@ -37,7 +39,14 @@ func (es *Es) Page(ctx context.Context, paging *Paging) (PageResult, error) {
 		pr.Docs = docs
 		return pr, nil
 	}
-	boolQuery = query(paging.StartDate, paging.EndDate, paging.DateField, paging.QueryConds)
+	var zone *time.Location
+	if stringutils.IsNotEmpty(paging.Zone) {
+		zone, err = time.LoadLocation(paging.Zone)
+		if err != nil {
+			return PageResult{}, errors.Wrap(err, "call LoadLocation() error")
+		}
+	}
+	boolQuery = query(paging.StartDate, paging.EndDate, paging.DateField, paging.QueryConds, zone)
 	var rets []interface{}
 
 	var searchResult *elastic.SearchResult

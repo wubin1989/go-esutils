@@ -128,7 +128,7 @@ func Test_query(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			bq := query(tt.args.startDate, tt.args.endDate, tt.args.dateField, tt.args.queryConds)
+			bq := query(tt.args.startDate, tt.args.endDate, tt.args.dateField, tt.args.queryConds, nil)
 			var src interface{}
 			var err error
 			if src, err = bq.Source(); err != nil {
@@ -209,7 +209,7 @@ func Test_range_query(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			bq := query(tt.args.startDate, tt.args.endDate, tt.args.dateField, tt.args.queryConds)
+			bq := query(tt.args.startDate, tt.args.endDate, tt.args.dateField, tt.args.queryConds, nil)
 			var src interface{}
 			var err error
 			if src, err = bq.Source(); err != nil {
@@ -282,7 +282,7 @@ func Test_exists_query(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			bq := query(tt.args.startDate, tt.args.endDate, tt.args.dateField, tt.args.queryConds)
+			bq := query(tt.args.startDate, tt.args.endDate, tt.args.dateField, tt.args.queryConds, nil)
 			var src interface{}
 			var err error
 			if src, err = bq.Source(); err != nil {
@@ -360,7 +360,7 @@ func Test_children_query(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			bq := query(tt.args.startDate, tt.args.endDate, tt.args.dateField, tt.args.queryConds)
+			bq := query(tt.args.startDate, tt.args.endDate, tt.args.dateField, tt.args.queryConds, nil)
 			var src interface{}
 			var err error
 			if src, err = bq.Source(); err != nil {
