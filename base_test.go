@@ -1,13 +1,94 @@
 package esutils
 
 import (
+	"context"
 	"fmt"
 	"github.com/Jeffail/gabs/v2"
 	"github.com/olivere/elastic"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
+	"github.com/unionj-cloud/go-doudou/test"
+	"github.com/unionj-cloud/go-doudou/toolkit/constants"
+	"os"
 	"testing"
+	"time"
 )
+
+var esHost string
+var esPort int
+
+func TestMain(m *testing.M) {
+	os.Setenv("TZ", "Asia/Shanghai")
+	var terminator func()
+	terminator, esHost, esPort = test.PrepareTestEnvironment()
+	code := m.Run()
+	terminator()
+	os.Exit(code)
+}
+
+func setupSubTest(esindex string) *Es {
+	es := NewEs(esindex, esindex, WithLogger(logrus.StandardLogger()), WithUrls([]string{fmt.Sprintf("http://%s:%d", esHost, esPort)}))
+	prepareTestIndex(es)
+	prepareTestData(es)
+	return es
+}
+
+func prepareTestIndex(es *Es) {
+	mapping := NewMapping(MappingPayload{
+		Base{
+			Index: es.esIndex,
+			Type:  es.esType,
+		},
+		[]Field{
+			{
+				Name: "createAt",
+				Type: DATE,
+			},
+			{
+				Name: "text",
+				Type: TEXT,
+			},
+		},
+	})
+	_, err := es.NewIndex(context.Background(), mapping)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func prepareTestData(es *Es) {
+	data1 := "2020-06-01"
+	data2 := "2020-06-20"
+	data3 := "2020-07-10"
+
+	createAt1, _ := time.Parse(constants.FORMAT2, data1)
+	createAt2, _ := time.Parse(constants.FORMAT2, data2)
+	createAt3, _ := time.Parse(constants.FORMAT2, data3)
+
+	err := es.BulkSaveOrUpdate(context.Background(), []interface{}{
+		map[string]interface{}{
+			"id":       "9seTXHoBNx091WJ2QCh5",
+			"createAt": createAt1.UTC().Format(constants.FORMATES),
+			"type":     "education",
+			"text":     "2020年7月8日11时25分，高考文科综合/理科综合科目考试将要结束时，平顶山市一中考点一考生突然情绪失控，先后抓其右边、后边考生答题卡，造成两位考生答题卡损毁。",
+		},
+		map[string]interface{}{
+			"id":       "9seTXHoBNx091WJ2QCh6",
+			"createAt": createAt2.UTC().Format(constants.FORMATES),
+			"type":     "sport",
+			"text":     "考场两位监考教师及时制止，并稳定了考场秩序，市一中考点按程序启用备用答题卡，按规定补足答题卡被损毁的两位考生耽误的考试时间，两位考生将损毁卡的内容誊写在新答题卡上。",
+		},
+		map[string]interface{}{
+			"id":       "9seTXHoBNx091WJ2QCh7",
+			"createAt": createAt3.UTC().Format(constants.FORMATES),
+			"type":     "culture",
+			"text":     "目前，我办已将损毁其他考生答题卡的考生违规情况上报河南省招生办公室，将依规对该考生进行处理。平顶山市招生考试委员会办公室",
+		},
+	})
+	if err != nil {
+		panic(err)
+	}
+}
 
 func Test_query(t *testing.T) {
 	type args struct {
@@ -62,7 +143,7 @@ func Test_query(t *testing.T) {
 					},
 				},
 			},
-			want: `{"bool":{"minimum_should_match":"1","must":[{"range":{"createAt":{"format":"yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis","from":"2020-06-01","include_lower":true,"include_upper":true,"time_zone":"Asia/Shanghai","to":"2020-07-10"}}},{"bool":{"should":{"match_phrase":{"text":{"query":"高考"}}}}},{"terms":{"content":["北京"]}},{"terms":{"content_full":["unionj"]}}],"must_not":{"bool":{"should":{"match_phrase":{"text":{"query":"北京高考"}}}}},"should":[{"bool":{"should":{"match_phrase":{"text":{"query":"考生"}}}}},{"bool":{"should":{"bool":{"must":[{"match_phrase":{"school":{"query":"西安理工"}}},{"match_phrase":{"school":{"query":"西安交大"}}}]}}}},{"bool":{"should":{"bool":{"must":{"match_phrase":{"address":{"query":"北京"}}},"must_not":{"match_phrase":{"address":{"query":"西安"}}}}}}},{"bool":{"should":{"bool":{"must_not":{"match_phrase":{"company":{"query":"unionj"}}}}}}}]}}`,
+			want: `{"bool":{"minimum_should_match":"1","must":[{"range":{"createAt":{"format":"yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis","from":"2020-06-01","include_lower":true,"include_upper":false,"time_zone":"Asia/Shanghai","to":"2020-07-10"}}},{"bool":{"should":{"match_phrase":{"text":{"query":"高考"}}}}},{"terms":{"content":["北京"]}},{"terms":{"content_full":["unionj"]}}],"must_not":{"bool":{"should":{"match_phrase":{"text":{"query":"北京高考"}}}}},"should":[{"bool":{"should":{"match_phrase":{"text":{"query":"考生"}}}}},{"bool":{"should":{"bool":{"must":[{"match_phrase":{"school":{"query":"西安理工"}}},{"match_phrase":{"school":{"query":"西安交大"}}}]}}}},{"bool":{"should":{"bool":{"must":{"match_phrase":{"address":{"query":"北京"}}},"must_not":{"match_phrase":{"address":{"query":"西安"}}}}}}},{"bool":{"should":{"bool":{"must_not":{"match_phrase":{"company":{"query":"unionj"}}}}}}}]}}`,
 		},
 		{
 			name: "",
@@ -123,7 +204,7 @@ func Test_query(t *testing.T) {
 					},
 				},
 			},
-			want: `{"bool":{"minimum_should_match":"1","must":[{"range":{"createAt":{"format":"yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis","from":"2020-06-01","include_lower":true,"include_upper":true,"time_zone":"Asia/Shanghai","to":"2020-07-10"}}},{"terms":{"type.keyword":["education"]}},{"terms":{"status":[200]}},{"wildcard":{"position.keyword":{"wildcard":"dev*"}}},{"prefix":{"book.keyword":"go"}}],"must_not":[{"wildcard":{"city.keyword":{"wildcard":"四川*"}}},{"prefix":{"name.keyword":"unionj"}}],"should":[{"wildcard":{"dept.keyword":{"wildcard":"unionj*"}}},{"prefix":{"project.keyword":"unionj"}}]}}`,
+			want: `{"bool":{"minimum_should_match":"1","must":[{"range":{"createAt":{"format":"yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis","from":"2020-06-01","include_lower":true,"include_upper":false,"time_zone":"Asia/Shanghai","to":"2020-07-10"}}},{"terms":{"type.keyword":["education"]}},{"terms":{"status":[200]}},{"wildcard":{"position.keyword":{"wildcard":"dev*"}}},{"prefix":{"book.keyword":"go"}}],"must_not":[{"wildcard":{"city.keyword":{"wildcard":"四川*"}}},{"prefix":{"name.keyword":"unionj"}}],"should":[{"wildcard":{"dept.keyword":{"wildcard":"unionj*"}}},{"prefix":{"project.keyword":"unionj"}}]}}`,
 		},
 	}
 	for _, tt := range tests {
@@ -150,10 +231,12 @@ func Test_query(t *testing.T) {
 func Test_range_query(t *testing.T) {
 	param1 := make(map[string]interface{})
 	param1["to"] = 0.4
-	param1["include_upper"] = true
+	param1["include_upper"] = false
+	param1["include_lower"] = true
 
 	param2 := make(map[string]interface{})
 	param2["from"] = 0.6
+	param2["include_upper"] = false
 	param2["include_lower"] = true
 
 	type args struct {
@@ -204,7 +287,7 @@ func Test_range_query(t *testing.T) {
 					},
 				},
 			},
-			want: `{"bool":{"minimum_should_match":"1","must":[{"range":{"acceptDate":{"format":"yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis","from":"2020-06-01","include_lower":true,"include_upper":true,"time_zone":"Asia/Shanghai","to":"2020-07-01"}}},{"range":{"senseResult":{"from":null,"include_lower":true,"include_upper":true,"to":0.4}}},{"terms":{"orderPhrase":[300]}}],"must_not":{"range":{"commonSenseResult":{"from":0.6,"include_lower":true,"include_upper":true,"to":null}}},"should":{"range":{"visitSenseResult":{"from":0.6,"include_lower":true,"include_upper":true,"to":null}}}}}`,
+			want: `{"bool":{"minimum_should_match":"1","must":[{"range":{"acceptDate":{"format":"yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis","from":"2020-06-01","include_lower":true,"include_upper":false,"time_zone":"Asia/Shanghai","to":"2020-07-01"}}},{"range":{"senseResult":{"from":null,"include_lower":true,"include_upper":false,"to":0.4}}},{"terms":{"orderPhrase":[300]}}],"must_not":{"range":{"commonSenseResult":{"from":0.6,"include_lower":true,"include_upper":false,"to":null}}},"should":{"range":{"visitSenseResult":{"from":0.6,"include_lower":true,"include_upper":false,"to":null}}}}}`,
 		},
 	}
 	for _, tt := range tests {
@@ -277,7 +360,7 @@ func Test_exists_query(t *testing.T) {
 					},
 				},
 			},
-			want: `{"bool":{"minimum_should_match":"1","must":[{"range":{"acceptDate":{"format":"yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis","from":"2020-06-01","include_lower":true,"include_upper":true,"time_zone":"Asia/Shanghai","to":"2020-07-01"}}},{"exists":{"field":"flag"}},{"terms":{"orderPhrase":[300]}}],"must_not":{"exists":{"field":"delete_at"}},"should":{"exists":{"field":"status"}}}}`,
+			want: `{"bool":{"minimum_should_match":"1","must":[{"range":{"acceptDate":{"format":"yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis","from":"2020-06-01","include_lower":true,"include_upper":false,"time_zone":"Asia/Shanghai","to":"2020-07-01"}}},{"exists":{"field":"flag"}},{"terms":{"orderPhrase":[300]}}],"must_not":{"exists":{"field":"delete_at"}},"should":{"exists":{"field":"status"}}}}`,
 		},
 	}
 	for _, tt := range tests {
@@ -355,7 +438,7 @@ func Test_children_query(t *testing.T) {
 					},
 				},
 			},
-			want: `{"bool":{"must":{"range":{"acceptDate":{"format":"yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis","from":"2020-06-01","include_lower":true,"include_upper":true,"time_zone":"Asia/Shanghai","to":"2020-07-01"}}},"must_not":[{"exists":{"field":"delete_at"}},{"terms":{"status":[100,300]}},{"bool":{"must":[{"terms":{"type":["网络调查"]}},{"terms":{"price":[0]}}]}}]}}`,
+			want: `{"bool":{"must":{"range":{"acceptDate":{"format":"yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis","from":"2020-06-01","include_lower":true,"include_upper":false,"time_zone":"Asia/Shanghai","to":"2020-07-01"}}},"must_not":[{"exists":{"field":"delete_at"}},{"terms":{"status":[100,300]}},{"bool":{"must":[{"terms":{"type":["网络调查"]}},{"terms":{"price":[0]}}]}}]}}`,
 		},
 	}
 	for _, tt := range tests {

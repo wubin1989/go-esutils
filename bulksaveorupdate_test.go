@@ -2,29 +2,10 @@ package esutils
 
 import (
 	"context"
-	"github.com/unionj-cloud/go-doudou/test"
 	"github.com/unionj-cloud/go-doudou/toolkit/constants"
-	"os"
 	"testing"
 	"time"
 )
-
-var (
-	loc *time.Location
-)
-
-func TestMain(m *testing.M) {
-	var err error
-	loc, err = time.LoadLocation("Asia/Shanghai")
-	if err != nil {
-		panic(err)
-	}
-	var terminator func()
-	terminator, esHost, esPort = test.PrepareTestEnvironment()
-	code := m.Run()
-	terminator()
-	os.Exit(code)
-}
 
 func TestBulkSaveOrUpdate(t *testing.T) {
 	es := setupSubTest("test_bulksaveorupdate")
@@ -41,7 +22,7 @@ func TestBulkSaveOrUpdate(t *testing.T) {
 			args: args{
 				docs: []interface{}{
 					map[string]interface{}{
-						"createAt": time.Now().In(loc).Format(constants.FORMATES),
+						"createAt": time.Now().Format(constants.FORMATES),
 					},
 				},
 			},
@@ -72,7 +53,7 @@ func Test_getId(t *testing.T) {
 			args: args{
 				doc: map[string]interface{}{
 					"id":       "id1",
-					"createAt": time.Now().In(loc).Format(constants.FORMATES),
+					"createAt": time.Now().Format(constants.FORMATES),
 				},
 			},
 			want:    "id1",
@@ -86,7 +67,7 @@ func Test_getId(t *testing.T) {
 					CreateAt string
 				}{
 					Id:       "id2",
-					CreateAt: time.Now().In(loc).Format(constants.FORMATES),
+					CreateAt: time.Now().Format(constants.FORMATES),
 				},
 			},
 			want:    "id2",
@@ -96,7 +77,7 @@ func Test_getId(t *testing.T) {
 			name: "",
 			args: args{
 				doc: map[string]interface{}{
-					"createAt": time.Now().In(loc).Format(constants.FORMATES),
+					"createAt": time.Now().Format(constants.FORMATES),
 				},
 			},
 			want:    "",
@@ -108,7 +89,7 @@ func Test_getId(t *testing.T) {
 				doc: struct {
 					CreateAt string
 				}{
-					CreateAt: time.Now().In(loc).Format(constants.FORMATES),
+					CreateAt: time.Now().Format(constants.FORMATES),
 				},
 			},
 			want:    "",
