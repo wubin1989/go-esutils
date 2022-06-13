@@ -1,4 +1,4 @@
-module github.com/wubin1989/go-esutils
+module github.com/wubin1989/go-esutils/v2
 
 go 1.16
 
