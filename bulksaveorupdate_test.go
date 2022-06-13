@@ -2,7 +2,6 @@ package esutils
 
 import (
 	"context"
-	"github.com/unionj-cloud/go-doudou/test"
 	"github.com/unionj-cloud/go-doudou/toolkit/constants"
 	"os"
 	"testing"
@@ -20,7 +19,7 @@ func TestMain(m *testing.M) {
 		panic(err)
 	}
 	var terminator func()
-	terminator, esHost, esPort = test.PrepareTestEnvironment()
+	terminator, esHost, esPort = PrepareTestEnvironment()
 	code := m.Run()
 	terminator()
 	os.Exit(code)

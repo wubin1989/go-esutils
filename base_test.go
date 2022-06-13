@@ -1,13 +1,69 @@
 package esutils
 
 import (
+	"context"
 	"fmt"
 	"github.com/Jeffail/gabs/v2"
 	"github.com/olivere/elastic"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
+	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/wait"
 	"testing"
 )
+
+// PrepareTestEnvironment prepares test environment
+func PrepareTestEnvironment() (func(), string, int) {
+	var terminateContainer func() // variable to store function to terminate container
+	var host string
+	var port int
+	var err error
+	terminateContainer, host, port, err = SetupEs6Container(logrus.New())
+	if err != nil {
+		panic("failed to setup Elasticsearch container")
+	}
+	return terminateContainer, host, port
+}
+
+// SetupEs6Container starts elasticsearch 6.8.12 docker container
+func SetupEs6Container(logger *logrus.Logger) (func(), string, int, error) {
+	logger.Info("setup Elasticsearch v6 Container")
+	ctx := context.Background()
+
+	req := testcontainers.ContainerRequest{
+		Image:        "elasticsearch:6.8.12",
+		ExposedPorts: []string{"9200/tcp", "9300/tcp"},
+		Env: map[string]string{
+			"discovery.type": "single-node",
+		},
+		WaitingFor: wait.ForLog("started"),
+	}
+
+	esC, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
+		ContainerRequest: req,
+		Started:          true,
+	})
+
+	if err != nil {
+		logger.Errorf("error starting Elasticsearch container: %s", err)
+		panic(fmt.Sprintf("%v", err))
+	}
+
+	closeContainer := func() {
+		logger.Info("terminating container")
+		err := esC.Terminate(ctx)
+		if err != nil {
+			logger.Errorf("error terminating Elasticsearch container: %s", err)
+			panic(fmt.Sprintf("%v", err))
+		}
+	}
+
+	host, _ := esC.Host(ctx)
+	p, _ := esC.MappedPort(ctx, "9200/tcp")
+	port := p.Int()
+
+	return closeContainer, host, port, nil
+}
 
 func Test_query(t *testing.T) {
 	type args struct {
