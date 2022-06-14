@@ -16,7 +16,7 @@ func (es *Es) NewIndex(ctx context.Context, mapping string) (exists bool, err er
 	}
 	if !exists {
 		// Create a new index.
-		if res, err = es.client.CreateIndex(es.esIndex).BodyString(mapping).Do(ctx); err != nil {
+		if res, err = es.client.CreateIndex(es.esIndex).IncludeTypeName(true).BodyString(mapping).Do(ctx); err != nil {
 			return false, errors.Wrap(err, "call CreateIndex() error")
 		}
 		if !res.Acknowledged {

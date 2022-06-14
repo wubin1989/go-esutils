@@ -20,7 +20,7 @@ func TestNewMapping(t *testing.T) {
         "number_of_shards": "15"
     },
     "mappings": {
-        "` + es.esIndex + `": {
+        "` + es.esType + `": {
             "properties": {
 				"createAt": {
 					"type": "date"

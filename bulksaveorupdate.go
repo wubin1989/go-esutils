@@ -61,7 +61,8 @@ func (es *Es) BulkSaveOrUpdate(ctx context.Context, docs []interface{}) error {
 		}
 	}
 
-	es.client.Flush(es.esIndex).Do(ctx)
+	es.client.Flush(es.esIndex).WaitIfOngoing(true).Do(ctx)
+	es.client.Refresh(es.esIndex).Do(ctx)
 
 	return nil
 }

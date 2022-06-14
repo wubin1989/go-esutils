@@ -30,16 +30,21 @@ func PrepareTestEnvironment() (func(), string, int) {
 
 // SetupEs7Container starts elasticsearch 7.17.4 docker container
 func SetupEs7Container(logger *logrus.Logger) (func(), string, int, error) {
-	logger.Info("setup Elasticsearch v6 Container")
+	logger.Info("setup Elasticsearch v7 Container")
 	ctx := context.Background()
 
 	req := testcontainers.ContainerRequest{
-		Image:        "elasticsearch:7.17.4",
-		ExposedPorts: []string{"9200/tcp", "9300/tcp"},
+		Image:        "docker.elastic.co/elasticsearch/elasticsearch:7.17.4",
+		Name:         "elasticsearch",
+		ExposedPorts: []string{"9200/tcp"},
 		Env: map[string]string{
-			"discovery.type": "single-node",
+			"node.name":             "single-node",
+			"bootstrap.memory_lock": "true",
+			"cluster.name":          "testcontainers-go",
+			"discovery.type":        "single-node",
+			"ES_JAVA_OPTS":          "-Xms1g -Xmx1g",
 		},
-		WaitingFor: wait.ForLog("started"),
+		WaitingFor: wait.ForLog("Cluster health status changed from [YELLOW] to [GREEN]"),
 	}
 
 	esC, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
@@ -70,21 +75,24 @@ func SetupEs7Container(logger *logrus.Logger) (func(), string, int, error) {
 
 var esHost string
 var esPort int
+var loc *time.Location
 
 func TestMain(m *testing.M) {
 	os.Setenv("TZ", "Asia/Shanghai")
+	var err error
+	loc, err = time.LoadLocation("Asia/Shanghai")
+	if err != nil {
+		panic(err)
+	}
 	var terminator func()
 	terminator, esHost, esPort = PrepareTestEnvironment()
-	//
-	//esHost = "localhost"
-	//esPort = 9200
 	code := m.Run()
 	terminator()
 	os.Exit(code)
 }
 
 func setupSubTest(esindex string) *Es {
-	es := NewEs(esindex, esindex, WithLogger(logrus.StandardLogger()), WithUrls([]string{fmt.Sprintf("http://%s:%d", esHost, esPort)}))
+	es := NewEs(esindex, "_doc", WithLogger(logrus.StandardLogger()), WithUrls([]string{fmt.Sprintf("http://%s:%d", esHost, esPort)}))
 	prepareTestIndex(es)
 	prepareTestData(es)
 	return es
@@ -94,7 +102,7 @@ func prepareTestIndex(es *Es) {
 	mapping := NewMapping(MappingPayload{
 		Base{
 			Index: es.esIndex,
-			Type:  es.esType,
+			Type:  "_doc",
 		},
 		[]Field{
 			{
@@ -261,12 +269,12 @@ func Test_query(t *testing.T) {
 					},
 				},
 			},
-			want: `{"bool":{"minimum_should_match":"1","must":[{"range":{"createAt":{"format":"yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis","from":"2020-06-01","include_lower":true,"include_upper":false,"time_zone":"Asia/Shanghai","to":"2020-07-10"}}},{"terms":{"type.keyword":["education"]}},{"terms":{"status":[200]}},{"wildcard":{"position.keyword":{"wildcard":"dev*"}}},{"prefix":{"book.keyword":"go"}}],"must_not":[{"wildcard":{"city.keyword":{"wildcard":"四川*"}}},{"prefix":{"name.keyword":"unionj"}}],"should":[{"wildcard":{"dept.keyword":{"wildcard":"unionj*"}}},{"prefix":{"project.keyword":"unionj"}}]}}`,
+			want: `{"bool":{"minimum_should_match":"1","must":[{"range":{"createAt":{"format":"yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis","from":"2020-06-01","include_lower":true,"include_upper":false,"time_zone":"Asia/Shanghai","to":"2020-07-10"}}},{"terms":{"type.keyword":["education"]}},{"terms":{"status":[200]}},{"wildcard":{"position.keyword":{"value":"dev*"}}},{"prefix":{"book.keyword":"go"}}],"must_not":[{"wildcard":{"city.keyword":{"value":"四川*"}}},{"prefix":{"name.keyword":"unionj"}}],"should":[{"wildcard":{"dept.keyword":{"value":"unionj*"}}},{"prefix":{"project.keyword":"unionj"}}]}}`,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			bq := query(tt.args.startDate, tt.args.endDate, tt.args.dateField, tt.args.queryConds, nil)
+			bq := query(tt.args.startDate, tt.args.endDate, tt.args.dateField, tt.args.queryConds, loc)
 			var src interface{}
 			var err error
 			if src, err = bq.Source(); err != nil {
@@ -349,7 +357,7 @@ func Test_range_query(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			bq := query(tt.args.startDate, tt.args.endDate, tt.args.dateField, tt.args.queryConds, nil)
+			bq := query(tt.args.startDate, tt.args.endDate, tt.args.dateField, tt.args.queryConds, loc)
 			var src interface{}
 			var err error
 			if src, err = bq.Source(); err != nil {
@@ -422,7 +430,7 @@ func Test_exists_query(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			bq := query(tt.args.startDate, tt.args.endDate, tt.args.dateField, tt.args.queryConds, nil)
+			bq := query(tt.args.startDate, tt.args.endDate, tt.args.dateField, tt.args.queryConds, loc)
 			var src interface{}
 			var err error
 			if src, err = bq.Source(); err != nil {
@@ -500,7 +508,7 @@ func Test_children_query(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			bq := query(tt.args.startDate, tt.args.endDate, tt.args.dateField, tt.args.queryConds, nil)
+			bq := query(tt.args.startDate, tt.args.endDate, tt.args.dateField, tt.args.queryConds, loc)
 			var src interface{}
 			var err error
 			if src, err = bq.Source(); err != nil {

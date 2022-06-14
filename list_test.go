@@ -22,6 +22,7 @@ func TestList(t *testing.T) {
 		wantErr bool
 	}{
 		{
+			name: "",
 			args: args{
 				paging: &Paging{
 					StartDate: "2020-06-01",
@@ -51,6 +52,7 @@ func TestList(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "",
 			args: args{
 				paging: nil,
 				callback: func(message json.RawMessage) (interface{}, error) {
