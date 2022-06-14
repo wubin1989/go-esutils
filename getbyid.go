@@ -3,7 +3,7 @@ package esutils
 import (
 	"context"
 	"encoding/json"
-	"github.com/olivere/elastic"
+	"github.com/olivere/elastic/v7"
 	"github.com/pkg/errors"
 )
 
@@ -17,7 +17,7 @@ func (es *Es) GetByID(ctx context.Context, id string) (map[string]interface{}, e
 		return nil, errors.Wrap(err, "call Get() error")
 	}
 	var p map[string]interface{}
-	json.Unmarshal(*getResult.Source, &p)
+	json.Unmarshal(getResult.Source, &p)
 	p["_id"] = getResult.Id
 	return p, nil
 }

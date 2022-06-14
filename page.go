@@ -3,7 +3,7 @@ package esutils
 import (
 	"context"
 	"encoding/json"
-	"github.com/olivere/elastic"
+	"github.com/olivere/elastic/v7"
 	"github.com/pkg/errors"
 	"github.com/unionj-cloud/go-doudou/toolkit/stringutils"
 	"time"
@@ -68,7 +68,7 @@ func (es *Es) Page(ctx context.Context, paging *Paging) (PageResult, error) {
 	}
 	for _, hit := range searchResult.Hits.Hits {
 		var p map[string]interface{}
-		json.Unmarshal(*hit.Source, &p)
+		json.Unmarshal(hit.Source, &p)
 		p["_id"] = hit.Id
 		rets = append(rets, p)
 	}

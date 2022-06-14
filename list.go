@@ -3,7 +3,7 @@ package esutils
 import (
 	"context"
 	"encoding/json"
-	"github.com/olivere/elastic"
+	"github.com/olivere/elastic/v7"
 	"github.com/pkg/errors"
 	"github.com/unionj-cloud/go-doudou/toolkit/stringutils"
 	"time"

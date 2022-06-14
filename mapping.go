@@ -3,7 +3,7 @@ package esutils
 import (
 	"context"
 	"github.com/Jeffail/gabs/v2"
-	"github.com/olivere/elastic"
+	"github.com/olivere/elastic/v7"
 	"github.com/pkg/errors"
 )
 
@@ -49,21 +49,13 @@ func (es *Es) PutMapping(ctx context.Context, mp MappingPayload) error {
 		properties.Set(f.Type, f.Name, "type")
 	}
 	mapping.Set(properties, "properties")
-	if res, err = es.client.PutMapping().Index(mp.Index).Type(mp.Type).BodyString(mapping.String()).Do(ctx); err != nil {
+	if res, err = es.client.PutMapping().Index(mp.Index).BodyString(mapping.String()).Do(ctx); err != nil {
 		return errors.Wrap(err, "call PutMapping() error")
 	}
 	if !res.Acknowledged {
 		return errors.New("putmapping failed!!!")
 	}
 	return nil
-}
-
-// CheckTypeExists assert the es type exists
-func (es *Es) CheckTypeExists(ctx context.Context) (b bool, err error) {
-	if b, err = es.client.TypeExists().Index(es.esIndex).Type(es.esType).Do(ctx); err != nil {
-		return false, errors.Wrap(err, "call TypeExists() error")
-	}
-	return
 }
 
 // GetMapping get mapping
@@ -84,7 +76,7 @@ func (es *Es) PutMappingJson(ctx context.Context, mapping string) error {
 		res *elastic.PutMappingResponse
 		err error
 	)
-	if res, err = es.client.PutMapping().Index(es.esIndex).Type(es.esType).BodyString(mapping).Do(ctx); err != nil {
+	if res, err = es.client.PutMapping().Index(es.esIndex).BodyString(mapping).Do(ctx); err != nil {
 		return errors.Wrap(err, "call PutMappingJson() error")
 	}
 	if !res.Acknowledged {

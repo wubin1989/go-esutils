@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/Jeffail/gabs/v2"
-	"github.com/olivere/elastic"
+	"github.com/olivere/elastic/v7"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

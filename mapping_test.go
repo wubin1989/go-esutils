@@ -66,63 +66,6 @@ func TestNewMapping(t *testing.T) {
 	}
 }
 
-func TestCheckTypeExists(t *testing.T) {
-	es := setupSubTest("test_checktypeexists")
-
-	tests := []struct {
-		name    string
-		wantB   bool
-		wantErr bool
-	}{
-		{
-			name:    "",
-			wantB:   true,
-			wantErr: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			gotB, err := es.CheckTypeExists(context.Background())
-			if (err != nil) != tt.wantErr {
-				t.Errorf("CheckTypeExists() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if gotB != tt.wantB {
-				t.Errorf("CheckTypeExists() = %v, want %v", gotB, tt.wantB)
-			}
-		})
-	}
-}
-
-func TestCheckTypeExists2(t *testing.T) {
-	es := setupSubTest("test_checktypeexists1")
-	es.esType = "not_exists"
-
-	tests := []struct {
-		name    string
-		wantB   bool
-		wantErr bool
-	}{
-		{
-			name:    "",
-			wantB:   false,
-			wantErr: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			gotB, err := es.CheckTypeExists(context.Background())
-			if (err != nil) != tt.wantErr {
-				t.Errorf("CheckTypeExists() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if gotB != tt.wantB {
-				t.Errorf("CheckTypeExists() = %v, want %v", gotB, tt.wantB)
-			}
-		})
-	}
-}
-
 func TestPutMapping(t *testing.T) {
 	es := setupSubTest("test_putmapping")
 

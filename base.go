@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/olivere/elastic"
+	"github.com/olivere/elastic/v7"
 	"github.com/sirupsen/logrus"
 	"github.com/unionj-cloud/go-doudou/toolkit/stringutils"
 )
@@ -151,11 +151,11 @@ func (e *Es) fetchAll(fsc *elastic.FetchSourceContext, boolQuery *elastic.BoolQu
 					var ret interface{}
 					if callback == nil {
 						var p map[string]interface{}
-						json.Unmarshal(*hit.Source, &p)
+						json.Unmarshal(hit.Source, &p)
 						p["_id"] = hit.Id
 						ret = p
 					} else {
-						if ret, err = callback(*hit.Source); err != nil {
+						if ret, err = callback(hit.Source); err != nil {
 							return errors.Wrap(err, "call callback() error")
 						}
 					}
@@ -200,11 +200,11 @@ func (e *Es) doPaging(ctx context.Context, fsc *elastic.FetchSourceContext, pagi
 		var ret interface{}
 		if callback == nil {
 			var p map[string]interface{}
-			json.Unmarshal(*hit.Source, &p)
+			json.Unmarshal(hit.Source, &p)
 			p["_id"] = hit.Id
 			ret = p
 		} else {
-			if ret, err = callback(*hit.Source); err != nil {
+			if ret, err = callback(hit.Source); err != nil {
 				return nil, errors.Wrap(err, "call callback() error")
 			}
 		}

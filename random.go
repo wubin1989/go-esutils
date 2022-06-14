@@ -3,7 +3,7 @@ package esutils
 import (
 	"context"
 	"encoding/json"
-	"github.com/olivere/elastic"
+	"github.com/olivere/elastic/v7"
 	"github.com/pkg/errors"
 	"github.com/unionj-cloud/go-doudou/toolkit/stringutils"
 	"time"
@@ -36,7 +36,7 @@ func (es *Es) Random(ctx context.Context, paging *Paging) ([]map[string]interfac
 	}
 	for _, hit := range sr.Hits.Hits {
 		var ret map[string]interface{}
-		json.Unmarshal(*hit.Source, &ret)
+		json.Unmarshal(hit.Source, &ret)
 		rets = append(rets, ret)
 	}
 	return rets, nil

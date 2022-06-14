@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/Jeffail/gabs/v2"
-	"github.com/olivere/elastic"
+	"github.com/olivere/elastic/v7"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/testcontainers/testcontainers-go"
@@ -21,20 +21,20 @@ func PrepareTestEnvironment() (func(), string, int) {
 	var host string
 	var port int
 	var err error
-	terminateContainer, host, port, err = SetupEs6Container(logrus.New())
+	terminateContainer, host, port, err = SetupEs7Container(logrus.New())
 	if err != nil {
 		panic("failed to setup Elasticsearch container")
 	}
 	return terminateContainer, host, port
 }
 
-// SetupEs6Container starts elasticsearch 6.8.12 docker container
-func SetupEs6Container(logger *logrus.Logger) (func(), string, int, error) {
+// SetupEs7Container starts elasticsearch 7.17.4 docker container
+func SetupEs7Container(logger *logrus.Logger) (func(), string, int, error) {
 	logger.Info("setup Elasticsearch v6 Container")
 	ctx := context.Background()
 
 	req := testcontainers.ContainerRequest{
-		Image:        "elasticsearch:6.8.12",
+		Image:        "elasticsearch:7.17.4",
 		ExposedPorts: []string{"9200/tcp", "9300/tcp"},
 		Env: map[string]string{
 			"discovery.type": "single-node",
