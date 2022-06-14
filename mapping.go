@@ -54,7 +54,7 @@ func (es *Es) PutMapping(ctx context.Context, mp MappingPayload) error {
 		properties.Set(f.Type, f.Name, "type")
 	}
 	mapping.Set(properties, "properties")
-	if res, err = es.client.PutMapping().Index(mp.Index).BodyString(mapping.String()).Do(ctx); err != nil {
+	if res, err = es.client.PutMapping().Index(mp.Index).IncludeTypeName(false).BodyString(mapping.String()).Do(ctx); err != nil {
 		return errors.Wrap(err, "call PutMapping() error")
 	}
 	if !res.Acknowledged {
@@ -76,12 +76,12 @@ func (es *Es) GetMapping(ctx context.Context) (map[string]interface{}, error) {
 }
 
 // PutMappingJson updates mapping with json data
-func (es *Es) PutMappingJson(ctx context.Context, mapping string, includeTypeName bool) error {
+func (es *Es) PutMappingJson(ctx context.Context, mapping string) error {
 	var (
 		res *elastic.PutMappingResponse
 		err error
 	)
-	if res, err = es.client.PutMapping().Index(es.esIndex).IncludeTypeName(includeTypeName).BodyString(mapping).Do(ctx); err != nil {
+	if res, err = es.client.PutMapping().Index(es.esIndex).IncludeTypeName(false).BodyString(mapping).Do(ctx); err != nil {
 		return errors.Wrap(err, "call PutMappingJson() error")
 	}
 	if !res.Acknowledged {
