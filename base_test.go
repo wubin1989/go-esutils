@@ -73,13 +73,13 @@ var esPort int
 
 func TestMain(m *testing.M) {
 	os.Setenv("TZ", "Asia/Shanghai")
-	//var terminator func()
-	//terminator, esHost, esPort = PrepareTestEnvironment()
-
-	esHost = "localhost"
-	esPort = 9200
+	var terminator func()
+	terminator, esHost, esPort = PrepareTestEnvironment()
+	//
+	//esHost = "localhost"
+	//esPort = 9200
 	code := m.Run()
-	//terminator()
+	terminator()
 	os.Exit(code)
 }
 
