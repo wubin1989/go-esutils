@@ -13,3 +13,5 @@ require (
 )
 
 require github.com/olivere/elastic/v7 v7.0.32
+
+replace github.com/olivere/elastic/v7 v7.0.32 => github.com/wubin1989/elastic/v7 v7.0.33

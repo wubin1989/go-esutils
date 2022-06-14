@@ -69,7 +69,7 @@ func (es *Es) GetMapping(ctx context.Context) (map[string]interface{}, error) {
 		res map[string]interface{}
 		err error
 	)
-	if res, err = es.client.GetMapping().Index(es.esIndex).Type(es.esType).Do(ctx); err != nil {
+	if res, err = es.client.GetMapping().Index(es.esIndex).Type(es.esType).IncludeTypeName(true).Do(ctx); err != nil {
 		return nil, errors.Wrap(err, "call GetMapping() error")
 	}
 	return res, nil
