@@ -252,15 +252,18 @@ func WithUrls(urls []string) EsOption {
 	}
 }
 
-// NewEs creates an Es instance
-func NewEs(esIndex, esType string, opts ...EsOption) *Es {
-	_esType := esType
-	if stringutils.IsEmpty(_esType) {
-		_esType = esIndex
+// WithType set es type
+func WithType(esType string) EsOption {
+	return func(es *Es) {
+		es.esType = esType
 	}
+}
+
+// NewEs creates an Es instance
+func NewEs(esIndex string, opts ...EsOption) *Es {
 	es := &Es{
 		esIndex: esIndex,
-		esType:  _esType,
+		esType:  "_doc",
 	}
 	for _, opt := range opts {
 		opt(es)

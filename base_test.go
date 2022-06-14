@@ -92,7 +92,7 @@ func TestMain(m *testing.M) {
 }
 
 func setupSubTest(esindex string) *Es {
-	es := NewEs(esindex, "_doc", WithLogger(logrus.StandardLogger()), WithUrls([]string{fmt.Sprintf("http://%s:%d", esHost, esPort)}))
+	es := NewEs(esindex, WithLogger(logrus.StandardLogger()), WithUrls([]string{fmt.Sprintf("http://%s:%d", esHost, esPort)}))
 	prepareTestIndex(es)
 	prepareTestData(es)
 	return es
@@ -102,7 +102,6 @@ func prepareTestIndex(es *Es) {
 	mapping := NewMapping(MappingPayload{
 		Base{
 			Index: es.esIndex,
-			Type:  "_doc",
 		},
 		[]Field{
 			{
@@ -578,7 +577,7 @@ func TestNewEs(t *testing.T) {
 	}
 	for _, tt := range tests {
 		assert.NotPanics(t, func() {
-			got := NewEs(tt.args.esIndex, tt.args.esType, tt.args.opts...)
+			got := NewEs(tt.args.esIndex, tt.args.opts...)
 			got.SetType(got.esIndex)
 		})
 	}
@@ -586,7 +585,7 @@ func TestNewEs(t *testing.T) {
 
 func TestEs_newDefaultClient(t *testing.T) {
 	assert.Panics(t, func() {
-		NewEs("test", "test", WithUrls([]string{"wrongurl"}))
+		NewEs("test", WithUrls([]string{"wrongurl"}))
 	})
 }
 

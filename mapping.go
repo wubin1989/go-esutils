@@ -5,6 +5,7 @@ import (
 	"github.com/Jeffail/gabs/v2"
 	"github.com/olivere/elastic/v7"
 	"github.com/pkg/errors"
+	"github.com/unionj-cloud/go-doudou/toolkit/stringutils"
 )
 
 // MappingPayload defines request payload for es index mapping
@@ -30,7 +31,11 @@ func NewMapping(mp MappingPayload) string {
 		properties.Set(f.Type, f.Name, "type")
 	}
 
-	mapping.Set(properties, "mappings", mp.Type, "properties")
+	esType := mp.Type
+	if stringutils.IsEmpty(esType) {
+		esType = "_doc"
+	}
+	mapping.Set(properties, "mappings", esType, "properties")
 
 	return mapping.String()
 }
