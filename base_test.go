@@ -73,10 +73,13 @@ var esPort int
 
 func TestMain(m *testing.M) {
 	os.Setenv("TZ", "Asia/Shanghai")
-	var terminator func()
-	terminator, esHost, esPort = PrepareTestEnvironment()
+	//var terminator func()
+	//terminator, esHost, esPort = PrepareTestEnvironment()
+
+	esHost = "localhost"
+	esPort = 9200
 	code := m.Run()
-	terminator()
+	//terminator()
 	os.Exit(code)
 }
 
@@ -157,7 +160,7 @@ func Test_query(t *testing.T) {
 		want string
 	}{
 		{
-			name: "",
+			name: "1",
 			args: args{
 				startDate: "2020-06-01",
 				endDate:   "2020-07-10",
@@ -200,7 +203,7 @@ func Test_query(t *testing.T) {
 			want: `{"bool":{"minimum_should_match":"1","must":[{"range":{"createAt":{"format":"yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis","from":"2020-06-01","include_lower":true,"include_upper":false,"time_zone":"Asia/Shanghai","to":"2020-07-10"}}},{"bool":{"should":{"match_phrase":{"text":{"query":"高考"}}}}},{"terms":{"content":["北京"]}},{"terms":{"content_full":["unionj"]}}],"must_not":{"bool":{"should":{"match_phrase":{"text":{"query":"北京高考"}}}}},"should":[{"bool":{"should":{"match_phrase":{"text":{"query":"考生"}}}}},{"bool":{"should":{"bool":{"must":[{"match_phrase":{"school":{"query":"西安理工"}}},{"match_phrase":{"school":{"query":"西安交大"}}}]}}}},{"bool":{"should":{"bool":{"must":{"match_phrase":{"address":{"query":"北京"}}},"must_not":{"match_phrase":{"address":{"query":"西安"}}}}}}},{"bool":{"should":{"bool":{"must_not":{"match_phrase":{"company":{"query":"unionj"}}}}}}}]}}`,
 		},
 		{
-			name: "",
+			name: "2",
 			args: args{
 				startDate: "2020-06-01",
 				endDate:   "2020-07-10",
