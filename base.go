@@ -94,7 +94,11 @@ func (e *Es) SetIndex(index string) {
 
 // SetType sets type
 func (e *Es) SetType(estype string) {
-	e.esType = estype
+	if stringutils.IsEmpty(estype) {
+		e.esType = e.esIndex
+	} else {
+		e.esType = estype
+	}
 }
 
 func (e *Es) newDefaultClient() {
